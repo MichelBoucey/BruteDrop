@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
         "log"
+        "os/exec"
 	// import "regexp"
 )
 
@@ -26,12 +27,16 @@ func main() {
                 log.Fatal(err)
 	}
 
-	// fmt.Println(string(data))
-
 	err = yaml.Unmarshal(data,&config)
 
 	if err != nil {
                 log.Fatal(err)
 	}
 
+        out, err := exec.Command("bash","-c","journalctl --since \"5 minutes ago\" -u sshd --no-pager | grep Failed").Output()
+
+	if err != nil {
+                log.Fatal(err)
+	}
+        fmt.Print(string(out))
 }
