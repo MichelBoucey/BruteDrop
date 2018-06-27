@@ -18,6 +18,15 @@ type Config struct {
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
 }
 
+func isElement(e string, l []string) bool {
+	for i := 0; i < len(l); i++ {
+		if l[i] == e {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 
 	var config Config
@@ -39,6 +48,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// AuthorizedUsers and AuthorizedAddresses can't be both empty
+	// TODO ("You have to add exceptions in brutedrop white lists.")
+
 	// Get SSH log lines from journaltctl
 	// out, err := exec.Command("bash","-c","journalctl --since \"5 minutes ago\" -u sshd --no-pager | grep Failed").Output()
 	out, err := exec.Command("bash", "-c", "journalctl --since \"1000 minutes ago\" -u sshd --no-pager | grep Accepted").Output()
@@ -49,11 +61,13 @@ func main() {
 
 	lines = strings.Split(string(out), "\n")
 
-	// Iterating over lines
+	// Iterating over log lines
 	for i := 0; i < len(lines); i++ {
 		if lines[i] != "" {
 			matches := invalidUser.FindStringSubmatch(lines[i])
-			fmt.Println(matches[2])
+			if isElement(matches[1], config.AuthorizedUsers) {
+				fmt.Println("Authorized user " + matches[1] + "@" + matches[2] + " failed to login")
+			}
 		}
 	}
 }
