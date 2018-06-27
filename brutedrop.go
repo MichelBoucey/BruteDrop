@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os/exec"
+	"regexp"
 	"strings"
-	// import "regexp"
 )
 
 type Config struct {
@@ -24,6 +24,9 @@ func main() {
 
 	var lines []string
 
+	// var invalidUser = regexp.MustCompile(`/^(\D{3}\s\d{2}\s\d{2}:\d{2}:\d{2}).*?for\s(invalid user\s|)(.+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/`)
+	var invalidUser = regexp.MustCompile(`\sfor\s(.+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s`)
+
 	data, err := ioutil.ReadFile("conf/brutedrop.conf")
 
 	if err != nil {
@@ -36,21 +39,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Get SSH log lines from journaltctl
 	// out, err := exec.Command("bash","-c","journalctl --since \"5 minutes ago\" -u sshd --no-pager | grep Failed").Output()
-	out, err := exec.Command("bash", "-c", "journalctl --since \"5 minutes ago\" -u sshd --no-pager").Output()
+	out, err := exec.Command("bash", "-c", "journalctl --since \"1000 minutes ago\" -u sshd --no-pager | grep Accepted").Output()
 
 	if string(out) == "" {
-		fmt.Println("Nil")
+		fmt.Println("No log lines to process")
 	}
 
 	lines = strings.Split(string(out), "\n")
 
 	// Iterating over lines
 	for i := 0; i < len(lines); i++ {
-		// /^(\D{3}\s\d{2}\s\d{2}:\d{2}:\d{2}).*?for\s(invalid user\s|)(.+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
-		fmt.Print("> ")
-		fmt.Println(lines[i])
-		fmt.Println()
-
+		if lines[i] != "" {
+			matches := invalidUser.FindStringSubmatch(lines[i])
+			fmt.Println(matches[2])
+		}
 	}
 }
