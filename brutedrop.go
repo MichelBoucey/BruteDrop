@@ -66,7 +66,6 @@ func main() {
 
 type Config struct {
 	Iptables            string   `yaml:"Iptables"`
-	IptablesChain       string   `yaml:"IptablesChain"`
 	Journalctl          string   `yaml:"Journalctl"`
 	LogPath             string   `yaml:"LogPath"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
