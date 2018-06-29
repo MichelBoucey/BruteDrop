@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -31,15 +32,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if _, err := os.Stat(config.Iptables); os.IsNotExist(err) {
+		log.Fatal("Can't find iptables at path " + config.Iptables)
+	}
+
+	if _, err := os.Stat(config.Journalctl); os.IsNotExist(err) {
+		log.Fatal("Can't find journalctl at path " + config.Journalctl)
+	}
+
 	// AuthorizedUsers and AuthorizedAddresses can't be both empty
 	if len(config.AuthorizedUsers) == 0 && len(config.AuthorizedAddresses) == 0 {
-		fmt.Println("You have to add authorized users or IP addresses in /etc/brutedrop.conf")
-		os.Exit(0)
+		log.Fatal("You have to add authorized users or IP addresses in /etc/brutedrop.conf")
 	}
 
 	// Get log lines of failed SSH login attempts from journalctl
-	out, err := exec.Command("sh", "-c", "journalctl --since \"43830 minutes ago\" -u sshd --no-pager | grep Failed").Output()
-
+	out, err := exec.Command("sh", "-c", config.Journalctl + " --since \"" + strconv.Itoa(config.LogEntriesSince) + " minutes ago\" -u sshd --no-pager | grep Failed").Output()
 	if string(out) == "" {
 		fmt.Println("No log lines to process")
 		os.Exit(0)
@@ -68,6 +75,7 @@ type Config struct {
 	Iptables            string   `yaml:"Iptables"`
 	Journalctl          string   `yaml:"Journalctl"`
 	LogPath             string   `yaml:"LogPath"`
+	LogEntriesSince     int      `yaml:"LogEntriesSince"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
 }
