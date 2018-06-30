@@ -1,8 +1,8 @@
 build:
-	go build -o brutedrop src/brutedrop.go
+	go build -o brutedrop src/main.go
 
 watch:
-	CompileDaemon -build "go build -o brutedrop src/brutedrop.go"	
+	CompileDaemon -build "go build -o brutedrop src/main.go"	
 
 get-deps:
 	go get "gopkg.in/yaml.v2"

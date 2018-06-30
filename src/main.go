@@ -45,10 +45,13 @@ func main() {
 		log.Fatal("You have to add authorized users or IP addresses in /etc/brutedrop.conf")
 	}
 
+	// TODO: iptables -N 'bruteDrop' 2> /dev/null
+
 	// Get log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl + " --since \"" + strconv.Itoa(config.LogEntriesSince) + " minutes ago\" -u sshd --no-pager | grep Failed").Output()
+
 	if string(out) == "" {
-		fmt.Println("No log lines to process")
+		fmt.Println("No log lines to process") // TODO : to stderr
 		os.Exit(0)
 	}
 
@@ -63,9 +66,11 @@ func main() {
 			origin := matches[3] + "@" + matches[4]
 
 			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.LogPath, timestamp + " Authorized user " + origin + " failed to login")
+				logging(config.LoggingTo, timestamp + " Authorized user " + origin + " failed to login")
 			} else if !isElement(matches[3], config.AuthorizedAddresses) {
-				logging(config.LogPath, timestamp + " Unauthorized user " + origin + " failed to login")
+				// iptables -w -C $chain -s $4 -j DROP 2> /dev/null
+				// iptables -w -A $chain -s $4 -j DROP
+				logging(config.LoggingTo, timestamp + " Unauthorized user " + origin + " failed to login")
 			}
 		}
 	}
@@ -74,7 +79,7 @@ func main() {
 type Config struct {
 	Iptables            string   `yaml:"Iptables"`
 	Journalctl          string   `yaml:"Journalctl"`
-	LogPath             string   `yaml:"LogPath"`
+	LoggingTo           string   `yaml:"LoggingTo"`
 	LogEntriesSince     int      `yaml:"LogEntriesSince"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
@@ -90,6 +95,10 @@ func isElement (e string, l []string) bool {
 }
 
 func logging (p string, s string) {
-	exec.Command("sh", "-c", "echo " + s + " >> " + p).Run()
+	if p != "stdout" {
+		exec.Command("sh", "-c", "echo " + s + " >> " + p).Run()
+	} else {
+		fmt.Println(s)
+	}
 }
 
