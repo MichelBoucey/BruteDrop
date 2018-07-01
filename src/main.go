@@ -45,10 +45,11 @@ func main() {
 		log.Fatal("You have to add authorized users or IP addresses in /etc/brutedrop.conf")
 	}
 
-	// TODO: iptables -N 'bruteDrop' 2> /dev/null
+	// Add bruteDrop chain if it doesn't exist
+	exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop' 2> /dev/null")
 
 	// Get log lines of failed SSH login attempts from journalctl
-	out, err := exec.Command("sh", "-c", config.Journalctl + " --since \"" + strconv.Itoa(config.LogEntriesSince) + " minutes ago\" -u sshd --no-pager | grep Failed").Output()
+	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
 
 	if string(out) == "" {
 		fmt.Println("No log lines to process") // TODO : to stderr
@@ -63,14 +64,19 @@ func main() {
 
 			matches := invalidUser.FindStringSubmatch(lines[i])
 			timestamp := "[" + matches[1] + "]"
-			origin := matches[3] + "@" + matches[4]
 
 			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.LoggingTo, timestamp + " Authorized user " + origin + " failed to login")
-			} else if !isElement(matches[3], config.AuthorizedAddresses) {
-				// iptables -w -C $chain -s $4 -j DROP 2> /dev/null
-				// iptables -w -A $chain -s $4 -j DROP
-				logging(config.LoggingTo, timestamp + " Unauthorized user " + origin + " failed to login")
+				logging(config.LoggingTo, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
+			} else if !isElement(matches[4], config.AuthorizedAddresses) {
+				drop := config.Iptables+" -w -C bruteDrop -s "+matches[4]+" -j DROP"
+				_, err := exec.Command("sh", "-c", drop).Output()
+				if err != nil {
+					err := exec.Command("sh", "-c", config.Iptables+" -w -A bruteDrop -s "+matches[4]+" -j DROP").Run()
+					if err != nil {
+						log.Fatal("Can't execute \"" + drop + "\"")
+					}
+					logging(config.LoggingTo, timestamp+" DROP "+matches[3]+" from "+matches[4] )
+				}
 			}
 		}
 	}
@@ -85,7 +91,7 @@ type Config struct {
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
 }
 
-func isElement (e string, l []string) bool {
+func isElement(e string, l []string) bool {
 	for i := 0; i < len(l); i++ {
 		if l[i] == e {
 			return true
@@ -94,11 +100,10 @@ func isElement (e string, l []string) bool {
 	return false
 }
 
-func logging (p string, s string) {
+func logging(p string, s string) {
 	if p != "stdout" {
-		exec.Command("sh", "-c", "echo " + s + " >> " + p).Run()
+		exec.Command("sh", "-c", "echo "+s+" >> "+p).Run()
 	} else {
 		fmt.Println(s)
 	}
 }
-
