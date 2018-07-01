@@ -6,3 +6,6 @@ watch:
 
 get-deps:
 	go get "gopkg.in/yaml.v2"
+
+install: build
+	cp ./brutedrop /usr/bin/brutedrop
