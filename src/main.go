@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// Add bruteDrop chain if it doesn't exist
-	exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop' 2> /dev/null")
+	exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop'").Run()
 
 	// Get log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
