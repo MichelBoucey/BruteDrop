@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// Add bruteDrop chain if it doesn't exist
-	exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop' 2> /dev/null")
+	// exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop' 2> /dev/null")
 
 	// Get log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
@@ -68,10 +68,10 @@ func main() {
 			if isElement(matches[3], config.AuthorizedUsers) {
 				logging(config.LoggingTo, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
 			} else if !isElement(matches[4], config.AuthorizedAddresses) {
-				drop := config.Iptables+" -w -C bruteDrop -s "+matches[4]+" -j DROP"
+				drop := config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP"
 				_, err := exec.Command("sh", "-c", drop).Output()
 				if err != nil {
-					err := exec.Command("sh", "-c", config.Iptables+" -w -A bruteDrop -s "+matches[4]+" -j DROP").Run()
+					err := exec.Command("sh", "-c", config.Iptables+" -w -A INPUT -s "+matches[4]+" -j DROP").Run()
 					if err != nil {
 						log.Fatal("Can't execute \"" + drop + "\"")
 					}
