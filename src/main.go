@@ -42,11 +42,8 @@ func main() {
 
 	// AuthorizedUsers and AuthorizedAddresses can't be both empty
 	if len(config.AuthorizedUsers) == 0 && len(config.AuthorizedAddresses) == 0 {
-		log.Fatal("You have to add authorized users or IP addresses in /etc/brutedrop.conf")
+		log.Fatal("To run brutedrop you have to add authorized users and/or IP addresses in /etc/brutedrop.conf")
 	}
-
-	// Add bruteDrop chain if it doesn't exist
-	// exec.Command("sh", "-c", config.Iptables+" -N 'bruteDrop'").Run()
 
 	// Get log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
@@ -62,17 +59,17 @@ func main() {
 		if lines[i] != "" {
 
 			matches := invalidUser.FindStringSubmatch(lines[i])
-			timestamp := "["+matches[1]+"]"
+			timestamp := "[" + matches[1] + "]"
 
 			if isElement(matches[3], config.AuthorizedUsers) {
 				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
 			} else if !isElement(matches[4], config.AuthorizedAddresses) {
-				drop := config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP"
-				_, err := exec.Command("sh", "-c", drop).Output()
+				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP").Output()
 				if err != nil {
-					err := exec.Command("sh", "-c", config.Iptables+" -w -A INPUT -s "+matches[4]+" -j DROP").Run()
+					appendRule := config.Iptables + " -w -A INPUT -s " + matches[4] + " -j DROP"
+					err := exec.Command("sh", "-c", appendRule).Run()
 					if err != nil {
-						log.Fatal("Can't execute \"" + drop + "\"")
+						log.Fatal("Can't execute \"" + appendRule + "\"")
 					}
 					logging(config.Logging, timestamp+" DROP "+matches[3]+" from "+matches[4])
 				}

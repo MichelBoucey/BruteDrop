@@ -1,4 +1,4 @@
-build:
+build: clean
 	go build -o brutedrop src/main.go
 
 watch:
@@ -9,3 +9,6 @@ get-deps:
 
 install: build
 	cp ./brutedrop /usr/bin/brutedrop
+
+clean:
+	rm -f ./brutedrop
