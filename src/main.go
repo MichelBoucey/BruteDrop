@@ -51,8 +51,7 @@ func main() {
 	// Get log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
 
-	if string(out) == "" {
-		fmt.Println("No log lines to process") // TODO : to stderr
+	if len(out) == 0 {
 		os.Exit(0)
 	}
 
@@ -63,19 +62,19 @@ func main() {
 		if lines[i] != "" {
 
 			matches := invalidUser.FindStringSubmatch(lines[i])
-			timestamp := "[" + matches[1] + "]"
+			timestamp := "["+matches[1]+"]"
 
 			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.LoggingTo, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
+				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
 			} else if !isElement(matches[4], config.AuthorizedAddresses) {
-				drop := config.Iptables+" -w -C bruteDrop -s "+matches[4]+" -j DROP"
+				drop := config.Iptables + " -w -C bruteDrop -s " + matches[4] + " -j DROP"
 				_, err := exec.Command("sh", "-c", drop).Output()
 				if err != nil {
 					err := exec.Command("sh", "-c", config.Iptables+" -w -A bruteDrop -s "+matches[4]+" -j DROP").Run()
 					if err != nil {
 						log.Fatal("Can't execute \"" + drop + "\"")
 					}
-					logging(config.LoggingTo, timestamp+" DROP "+matches[3]+" from "+matches[4] )
+					logging(config.Logging, timestamp+" DROP "+matches[3]+" from "+matches[4])
 				}
 			}
 		}
@@ -85,7 +84,7 @@ func main() {
 type Config struct {
 	Iptables            string   `yaml:"Iptables"`
 	Journalctl          string   `yaml:"Journalctl"`
-	LoggingTo           string   `yaml:"LoggingTo"`
+	Logging             string   `yaml:"Logging"`
 	LogEntriesSince     int      `yaml:"LogEntriesSince"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
