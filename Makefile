@@ -1,4 +1,4 @@
-build: clean
+build:
 	go build -o brutedrop src/main.go
 
 watch:
@@ -8,7 +8,4 @@ get-deps:
 	go get "gopkg.in/yaml.v2"
 
 install: build
-	cp ./brutedrop /usr/bin/brutedrop
-
-clean:
-	rm -f ./brutedrop
+	mv ./brutedrop /usr/bin/brutedrop
