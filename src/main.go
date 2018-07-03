@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -12,13 +13,25 @@ import (
 	"strings"
 )
 
+
 func main() {
+
+	version := "1.0.0"
 
 	var config Config
 
 	var logLines []string
 
 	var invalidUser = regexp.MustCompile(`(\D*?\s\d{2}\s\d{2}:\d{2}:\d{2}).*?\sfor\s(invalid\suser\s|)(.+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s`)
+
+	versionFlag := flag.Bool("version", false, "Show version")
+
+	flag.Parse()
+
+	if *versionFlag == true {
+		fmt.Println("brutedrop v" + version + "\nCopyright © 2018 Michel Boucey\nReleased under 3-Clause BSD License")
+		os.Exit(0)
+	}
 
 	// Get and check bruteDrop configuration
 	data, err := ioutil.ReadFile("/etc/brutedrop.conf")
