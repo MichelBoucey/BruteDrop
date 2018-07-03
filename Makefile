@@ -8,4 +8,4 @@ get-deps:
 	go get "gopkg.in/yaml.v2"
 
 install: build
-	mv ./brutedrop /usr/bin/brutedrop
+	mv ./brutedrop /usr/sbin/brutedrop
