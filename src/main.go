@@ -13,7 +13,6 @@ import (
 	"strings"
 )
 
-
 func main() {
 
 	version := "1.0.0"
@@ -29,7 +28,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v" + version + "\nCopyright © 2018 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v"+version+"\nCopyright © 2018 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -43,10 +42,10 @@ func main() {
 		log.Fatal(err)
 	}
 	if _, err := os.Stat(config.Iptables); os.IsNotExist(err) {
-		log.Fatal("Can't find iptables at path " + config.Iptables)
+		log.Fatal("Can't find iptables at path "+config.Iptables)
 	}
 	if _, err := os.Stat(config.Journalctl); os.IsNotExist(err) {
-		log.Fatal("Can't find journalctl at path " + config.Journalctl)
+		log.Fatal("Can't find journalctl at path "+config.Journalctl)
 	}
 	// AuthorizedUsers and AuthorizedAddresses can't be both empty
 	if len(config.AuthorizedUsers) == 0 && len(config.AuthorizedAddresses) == 0 {
@@ -54,7 +53,7 @@ func main() {
 	}
 
 	// Get log lines of failed SSH login attempts from journalctl
-	out, err := exec.Command("sh", "-c", config.Journalctl + " --since \"" + strconv.Itoa(config.LogEntriesSince) + " minutes ago\" -u sshd --no-pager | grep Failed").Output()
+	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
 	if len(out) == 0 {
 		os.Exit(0)
 	}
@@ -65,19 +64,19 @@ func main() {
 		if logLines[i] != "" {
 
 			matches := invalidUser.FindStringSubmatch(logLines[i])
-			timestamp := "[" + matches[1] + "]"
+			timestamp := "["+matches[1]+"]"
 
 			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.Logging, timestamp + " Authorized user " + matches[3] + " failed to login from" + matches[4])
+				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
 			} else if !isElement(matches[4], config.AuthorizedAddresses) {
-				_, err := exec.Command("sh", "-c", config.Iptables + " -w -C INPUT -s " + matches[4] + " -j DROP").Output()
+				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP").Output()
 				if err != nil {
-					appendRule := config.Iptables + " -w -A INPUT -s " + matches[4] + " -j DROP"
+					appendRule := config.Iptables+" -w -A INPUT -s "+matches[4]+" -j DROP"
 					err := exec.Command("sh", "-c", appendRule).Run()
 					if err != nil {
-						log.Fatal("Can't execute \"" + appendRule + "\"")
+						log.Fatal("Can't execute \""+appendRule+"\"")
 					}
-					logging(config.Logging, timestamp + " DROP " + matches[3] + " from " + matches[4])
+					logging(config.Logging, timestamp+" DROP "+matches[3]+" from "+matches[4])
 				}
 			}
 		}
@@ -104,7 +103,7 @@ func isElement(e string, l []string) bool {
 
 func logging(p string, s string) {
 	if p != "stdout" {
-		exec.Command("sh", "-c", "echo " + s + " >> " + p).Run()
+		exec.Command("sh", "-c", "echo "+s+" >> "+p).Run()
 	} else {
 		fmt.Println(s)
 	}
