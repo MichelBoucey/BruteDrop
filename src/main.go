@@ -67,7 +67,7 @@ func main() {
 			timestamp := "["+matches[1]+"]"
 
 			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from"+matches[4])
+				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from "+matches[4])
 			} else if !isElement(matches[4], config.AuthorizedAddresses) {
 				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP").Output()
 				if err != nil {
