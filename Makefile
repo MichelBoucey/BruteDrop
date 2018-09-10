@@ -9,3 +9,6 @@ get-deps:
 
 install: build
 	mv ./brutedrop /usr/sbin/brutedrop
+
+test: install
+	brutedrop -version | grep -q  License
