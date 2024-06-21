@@ -1,4 +1,4 @@
-name: dumber
+name: Build brutedrop
 on: [push]
 
 jobs:
