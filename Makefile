@@ -8,7 +8,7 @@ get-deps:
 	go get "gopkg.in/yaml.v2"
 
 install: build
-	mv ./brutedrop /usr/sbin/brutedrop
+	mv ./brutedrop /sbin/brutedrop && chmod 0700 /sbin/brutedrop
 
 test: install
 	brutedrop -version | grep -q  License
