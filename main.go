@@ -69,8 +69,6 @@ func main() {
 
 			if len(matches) == 4 {
 
-			fmt.Println(matches[2])
-
 				if isElement(matches[2], config.AuthorizedUsers) {
 
 					logging(config.LoggingTo, "brutedrop: Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
