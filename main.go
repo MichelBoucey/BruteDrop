@@ -21,14 +21,14 @@ func main() {
 
 	var logLines []string
 
-	var invalidUser = regexp.MustCompile(`(\D*?\s\d{2}\s\d{2}:\d{2}:\d{2}).*?\sfor\s(invalid\suser\s|)(.+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s`)
+	var invalidUser = regexp.MustCompile(`(.*?\d{2}:\d{2}:\d{2}).*?Invalid\suser\s(\w+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s`)
 
 	versionFlag := flag.Bool("version", false, "Show version")
 
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v"+version+"\nCopyright © 2018 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v"+version+"\nCopyright © 224 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -53,7 +53,8 @@ func main() {
 	}
 
 	// Get log lines of failed SSH login attempts from journalctl
-	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Failed").Output()
+	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Invalid").Output()
+
 	if len(out) == 0 {
 		os.Exit(0)
 	}
@@ -61,22 +62,24 @@ func main() {
 
 	// Iterating over log lines
 	for i := 0; i < len(logLines); i++ {
+
 		if logLines[i] != "" {
 
 			matches := invalidUser.FindStringSubmatch(logLines[i])
-			timestamp := "["+matches[1]+"]"
 
-			if isElement(matches[3], config.AuthorizedUsers) {
-				logging(config.Logging, timestamp+" Authorized user "+matches[3]+" failed to login from "+matches[4])
-			} else if !isElement(matches[4], config.AuthorizedAddresses) {
-				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[4]+" -j DROP").Output()
+			if isElement(matches[2], config.AuthorizedUsers) {
+				logging(config.LoggingTo, "brutedrop: Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
+			} else if !isElement(matches[3], config.AuthorizedAddresses) {
+				// Is this IP address already banned ?
+				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
 				if err != nil {
-					appendRule := config.Iptables+" -w -A INPUT -s "+matches[4]+" -j DROP"
+					// Ban IP address
+					appendRule := config.Iptables+" -w -A INPUT -s "+matches[3]+" -j DROP"
 					err := exec.Command("sh", "-c", appendRule).Run()
 					if err != nil {
 						log.Fatal("Can't execute \""+appendRule+"\"")
 					}
-					logging(config.Logging, timestamp+" DROP "+matches[3]+" from "+matches[4])
+					logging(config.LoggingTo, "brutedrop: Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
 				}
 			}
 		}
@@ -86,7 +89,7 @@ func main() {
 type Config struct {
 	Iptables            string   `yaml:"Iptables"`
 	Journalctl          string   `yaml:"Journalctl"`
-	Logging             string   `yaml:"Logging"`
+	LoggingTo           string   `yaml:"LoggingTo"`
 	LogEntriesSince     int      `yaml:"LogEntriesSince"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
