@@ -75,8 +75,6 @@ func main() {
 
 				} else if !isElement(matches[3], config.AuthorizedAddresses) {
 
-					logging(config.LoggingTo, "brutedrop: Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
-
 					// Is this IP address already banned ?
 					_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
 					if err != nil {
