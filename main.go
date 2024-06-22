@@ -71,7 +71,7 @@ func main() {
 
 				if isElement(matches[2], config.AuthorizedUsers) {
 
-					logging(config.LoggingTo, "brutedrop: Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
+					logging(config.LoggingTo, "Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
 
 				} else if !isElement(matches[3], config.AuthorizedAddresses) {
 
@@ -84,11 +84,11 @@ func main() {
 						if err != nil {
 							log.Fatal("Can't execute \""+appendRule+"\"")
 						}
-						logging(config.LoggingTo, "brutedrop: Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
+						logging(config.LoggingTo, "Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
 					}
 				} else {
 
-					logging(config.LoggingTo, "brutedrop: Invalid user "+matches[2]+" from authorized IP address "+matches[3]+" at "+matches[1])
+					logging(config.LoggingTo, "Invalid user "+matches[2]+" from authorized IP address "+matches[3]+" at "+matches[1])
 
 				}
 			}
