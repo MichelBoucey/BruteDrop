@@ -1,0 +1,8 @@
+[Unit]
+Description=BruteDrop
+After=sshd.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/brutedrop
+StandardOutput=journal
