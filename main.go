@@ -15,7 +15,7 @@ import (
 
 func main() {
 
-	version := "1.0.0"
+	version := "1.0.1"
 
 	var config Config
 
@@ -28,7 +28,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v"+version+"\nCopyright © 024 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v"+version+"\nCopyright ©2024 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -88,7 +88,7 @@ func main() {
 					}
 				} else {
 
-					logging(config.LoggingTo, "brutedrop: Invalid user "+matches[2]+" from authorized IP address "+matches[3])
+					logging(config.LoggingTo, "brutedrop: Invalid user "+matches[2]+" from authorized IP address "+matches[3]+" at "+matches[1])
 
 				}
 			}
