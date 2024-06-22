@@ -21,14 +21,14 @@ func main() {
 
 	var logLines []string
 
-	var invalidUser = regexp.MustCompile(`(.*?\d{2}:\d{2}:\d{2}).*?Invalid\suser\s(\w+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s`)
+	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?Invalid\suser\s(\w+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}$`)
 
 	versionFlag := flag.Bool("version", false, "Show version")
 
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v"+version+"\nCopyright © 224 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v"+version+"\nCopyright © 024 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -67,19 +67,33 @@ func main() {
 
 			matches := invalidUser.FindStringSubmatch(logLines[i])
 
-			if isElement(matches[2], config.AuthorizedUsers) {
-				logging(config.LoggingTo, "brutedrop: Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
-			} else if !isElement(matches[3], config.AuthorizedAddresses) {
-				// Is this IP address already banned ?
-				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
-				if err != nil {
-					// Ban IP address
-					appendRule := config.Iptables+" -w -A INPUT -s "+matches[3]+" -j DROP"
-					err := exec.Command("sh", "-c", appendRule).Run()
-					if err != nil {
-						log.Fatal("Can't execute \""+appendRule+"\"")
-					}
+			if len(matches) == 4 {
+
+			fmt.Println(matches[2])
+
+				if isElement(matches[2], config.AuthorizedUsers) {
+
+					logging(config.LoggingTo, "brutedrop: Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
+
+				} else if !isElement(matches[3], config.AuthorizedAddresses) {
+
 					logging(config.LoggingTo, "brutedrop: Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
+
+					// Is this IP address already banned ?
+					_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
+					if err != nil {
+						// Ban IP address
+						appendRule := config.Iptables+" -w -A INPUT -s "+matches[3]+" -j DROP"
+						err := exec.Command("sh", "-c", appendRule).Run()
+						if err != nil {
+							log.Fatal("Can't execute \""+appendRule+"\"")
+						}
+						logging(config.LoggingTo, "brutedrop: Dropping "+matches[3]+" from invalid user "+matches[2]+" connection at "+matches[1])
+					}
+				} else {
+
+					logging(config.LoggingTo, "brutedrop: Invalid user "+matches[2]+" from authorized IP address "+matches[3])
+
 				}
 			}
 		}
