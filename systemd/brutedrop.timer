@@ -1,9 +1,9 @@
 [Unit]
-Description=Launch BruteDrop every 15s
+Description=Launch BruteDrop every 20s
 Requires=brutedrop.service
 
 [Timer]
-OnCalendar=*-*-* *:*:00,15,30,45
+OnCalendar=*-*-* *:*:00,20,40
 Persistent=true
 
 [Install]
