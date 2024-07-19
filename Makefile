@@ -1,5 +1,5 @@
 build:
-	go build -o brutedrop main.go
+	go build -o brutedrop *.go
 
 watch:
 	CompileDaemon -build "go build -o brutedrop main.go"
