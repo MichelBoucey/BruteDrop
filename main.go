@@ -13,9 +13,13 @@ import (
 	"strings"
 )
 
+var (
+	commitHash = ""
+)
+
 func main() {
 
-	version := "2.0.0"
+	version := "2.0.1"
 
 	var config Config
 
@@ -28,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v" + version + "\nCopyright ©2024 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v" + version + " (" + commitHash + ")\nCopyright ©2024 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -52,6 +56,18 @@ func main() {
 		log.Fatal("To run brutedrop you have to add authorized users and/or IP addresses in /etc/brutedrop.conf")
 	}
 
+	// Set how to log
+	if config.LoggingTo != "stdout" {
+		lf, err := os.OpenFile(config.LoggingTo, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer lf.Close()
+		log.SetOutput(lf)
+	} else {
+		log.SetFlags(0)
+	}
+
 	// Okay. Now get some of th latest log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Invalid").Output()
 
@@ -72,7 +88,7 @@ func main() {
 
 				if isElement(matches[2], config.AuthorizedUsers) {
 
-					logging(config.LoggingTo, "Authorized user "+matches[2]+" failed to login from "+matches[3]+" at "+matches[1])
+					log.Println("Authorized user " + matches[2] + " failed to login from " + matches[3] + " at " + matches[1])
 
 				} else if !isElement(matches[3], config.AuthorizedAddresses) {
 
@@ -85,11 +101,11 @@ func main() {
 						if err != nil {
 							log.Fatal("Can't execute \"" + dropCommand + "\"")
 						}
-						logging(config.LoggingTo, "Ban "+matches[2]+"@"+matches[3]+" at "+matches[1])
+						log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
 					}
 				} else {
 
-					logging(config.LoggingTo, "Invalid user "+matches[2]+" but from authorized IP address "+matches[3]+" at "+matches[1])
+					log.Println("Invalid user " + matches[2] + " from authorized IP address " + matches[3] + " at " + matches[1])
 
 				}
 			}

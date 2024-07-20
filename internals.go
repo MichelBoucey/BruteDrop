@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"os/exec"
-)
-
 type Config struct {
 	Iptables            string   `yaml:"IptablesBinPath"`
 	Journalctl          string   `yaml:"JournalctlBinPath"`
@@ -21,12 +16,4 @@ func isElement(e string, l []string) bool {
 		}
 	}
 	return false
-}
-
-func logging(p string, s string) {
-	if p != "stdout" {
-		exec.Command("sh", "-c", "echo "+s+" >> "+p).Run()
-	} else {
-		fmt.Println(s)
-	}
 }
