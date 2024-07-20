@@ -1,14 +1,14 @@
+COMMIT_HASH := $(shell git rev-parse HEAD)
+
 build:
-	go build -o brutedrop *.go
+	go build -ldflags "-X 'main.commitHash=$(COMMIT_HASH)'"
 
 watch:
-	CompileDaemon -build "go build -o brutedrop main.go"
+	CompileDaemon -build "go build"
 
 get-deps:
 	go get "gopkg.in/yaml.v2"
 
 install: build
-	mv ./brutedrop /sbin/brutedrop && chmod 0700 /sbin/brutedrop
+	sudo mv ./brutedrop /sbin/brutedrop && chmod 0755 /sbin/brutedrop
 
-test: install
-	brutedrop -version | grep -q  License
