@@ -29,6 +29,8 @@ func main() {
 
 	versionFlag := flag.Bool("version", false, "Show version")
 
+	configFilepathFlag := flag.String("configuration-filepath", "/etc/brutedrop.conf", "Full configuration file path")
+
 	flag.Parse()
 
 	if *versionFlag == true {
@@ -37,7 +39,7 @@ func main() {
 	}
 
 	// Get and check BruteDrop configuration
-	data, err := ioutil.ReadFile("/etc/brutedrop.conf")
+	data, err := ioutil.ReadFile(*configFilepathFlag)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,11 +99,15 @@ func main() {
 					if err != nil {
 						// No, so ban this IP address with a DROP iptables rule
 						dropCommand := config.Iptables + " -w -A INPUT -s " + matches[3] + " -j DROP"
-						err := exec.Command("sh", "-c", dropCommand).Run()
-						if err != nil {
-							log.Fatal("Can't execute \"" + dropCommand + "\"")
+						if config.DryRun == false {
+							err := exec.Command("sh", "-c", dropCommand).Run()
+							if err != nil {
+								log.Fatal("Can't execute \"" + dropCommand + "\"")
+							}
+							log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
+						} else {
+							log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 						}
-						log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
 					}
 				} else {
 

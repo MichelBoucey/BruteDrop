@@ -1,6 +1,7 @@
 package main
 
 type Config struct {
+	DryRun              bool     `yaml:"DryRunMode"`
 	Iptables            string   `yaml:"IptablesBinPath"`
 	Journalctl          string   `yaml:"JournalctlBinPath"`
 	LoggingTo           string   `yaml:"LoggingTo"`
