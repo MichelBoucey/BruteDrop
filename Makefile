@@ -12,3 +12,5 @@ get-deps:
 install: build
 	sudo mv ./brutedrop /sbin/brutedrop && chmod 0755 /sbin/brutedrop
 
+clean:
+	rm -f ./brutedrop
