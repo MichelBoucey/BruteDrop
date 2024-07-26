@@ -1,7 +1,7 @@
-COMMIT_HASH := $(shell git rev-parse HEAD)
+SHORT_SHA := $(shell git rev-parse --short HEAD)
 
 build:
-	go build -ldflags "-X 'main.commitHash=$(COMMIT_HASH)'"
+	go build -ldflags "-X 'main.commitHash=$(SHORT_SHA)'"
 
 watch:
 	CompileDaemon -build "go build"
