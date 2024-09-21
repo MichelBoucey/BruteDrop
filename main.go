@@ -25,7 +25,7 @@ func main() {
 
 	var logLines []string
 
-	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?Invalid\suser\s(\w+)\sfrom\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}$`)
+	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?invalid\suser\s(\w+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}`)
 
 	versionFlag := flag.Bool("version", false, "Show version")
 
@@ -70,8 +70,8 @@ func main() {
 		log.SetFlags(0)
 	}
 
-	// Okay. Now get some of th latest log lines of failed SSH login attempts from journalctl
-	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep Invalid").Output()
+	// Okay, now get some of the latest log lines of failed SSH login attempts from journalctl
+	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep invalid").Output()
 
 	if len(out) == 0 {
 		os.Exit(0)
