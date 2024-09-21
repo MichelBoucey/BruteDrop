@@ -65,7 +65,7 @@ ExecStart=/sbin/brutedrop
 StandardOutput=journal
 ```
 
-## Enable and start the systemd BruteDrop service
+## 5. Enable and start the systemd BruteDrop service
 
 To be sure you won't lock you out, you can test your configuration and see what's going on when BruteDrop runs by setting `DryRunMode` to `true` and follow log outputs with `sudo journalctl -u brutedrop -f`.
 
