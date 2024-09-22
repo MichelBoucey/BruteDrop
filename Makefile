@@ -10,7 +10,7 @@ get-deps:
 	go get "gopkg.in/yaml.v2"
 
 install: build
-	sudo mv ./brutedrop /sbin/brutedrop && chmod 0755 /sbin/brutedrop
+	mv ./brutedrop /sbin/brutedrop && chmod 0755 /sbin/brutedrop
 
 clean:
 	rm -f ./brutedrop
