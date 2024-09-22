@@ -1,14 +1,16 @@
 # BruteDrop
 
-A simple but effective - I mean <i>brute</i> -  tool written in Go as response to brute force attacks.
+## 1. Purpose
+
+BruteDrop is a simple but effective - I mean <i>brute</i> - tool written in Go as response to brute force attacks.
 
 The idea, very common instead, is to block all ports to each IP address from which someone try to gain access to an SSH session by brute force attack.
 
-## 1. Basic pre-required sshd_config configuration against SSH attack
+## 2. Basic pre-required sshd_config configuration against SSH attack
 
 Configure your SSH daemon with those advices in mind:
 
-- For sure don't use common user names as admin, mysql, etc.
+- For sure don't use common user names as admin, mysql or kafka
 - No password authentication
 - No root login
 - Use key access only
@@ -19,21 +21,20 @@ Which gives in `sshd_config` file directives:
 
 ```
 PasswordAuthentication no
-
 PermitRootLogin no
-
 PubkeyAcceptedKeyTypes ssh-ed25519
-
 AllowUsers angus@* malcom@e.f.g.h
 ```
 
-## 2. Install BruteDrop binary
+## 3. Install BruteDrop binary
 
 ```
 sudo make install
 ```
 
-## 3. Add BruteDrop configuration file
+## 4. Add BruteDrop configuration file
+
+Default BruteDrop configuration file path is `/etc/brutedrop.conf`.
 
 ```
 IptablesBinPath: /usr/bin/iptables
@@ -56,7 +57,7 @@ AuthorizedAddresses:
  - w.x.y.z
 ```
 
-## 4. Add the systemd BruteDrop timer
+## 5. Add the systemd BruteDrop timer
 
 /etc/systemd/system/brutedrop.timer
 
@@ -73,7 +74,7 @@ Persistent=true
 WantedBy=timers.target
 ```
 
-## 5. Add the systemd BruteDrop service
+## 6. Add the systemd BruteDrop service
 
 `/usr/lib/systemd/system/brutedrop.service`
 
@@ -88,7 +89,7 @@ ExecStart=/sbin/brutedrop
 StandardOutput=journal
 ```
 
-## 6. Enable and start the systemd BruteDrop service
+## 7. Enable and start the systemd BruteDrop service
 
 To be sure you won't lock you out, you can test your configuration and see what's going on when BruteDrop runs by setting `DryRunMode` to `true` and follow log outputs with `sudo journalctl -u brutedrop -f`.
 
