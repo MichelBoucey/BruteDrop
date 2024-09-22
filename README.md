@@ -93,7 +93,7 @@ StandardOutput=journal
 To be sure you won't lock you out, you can test your configuration and see what's going on when BruteDrop runs by setting `DryRunMode` to `true` and follow log outputs with `sudo journalctl -u brutedrop -f`.
 
 ```
-[angus@box ~]$ sudo systemdctl enable brutedrop
-[angus@box ~]$ sudo systemdctl start brutedrop
+[angus@box ~]$ sudo systemctl enable brutedrop
+[angus@box ~]$ sudo systemctl start brutedrop
 ```
 
