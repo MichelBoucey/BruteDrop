@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-BruteDrop is a simple but effective - I mean <i>brute</i> - tool written in Go as response to brute force attacks.
+`BruteDrop` is a simple but effective - I mean <i>brute</i> - tool written in Go as response to brute force attacks.
 
 The idea, very common indeed, is to block all ports to each IP address from which someone try to gain access to an SSH session by brute force attack.
 
@@ -10,7 +10,7 @@ The idea, very common indeed, is to block all ports to each IP address from whic
 
 Configure your SSH daemon with those advices in mind:
 
-- For sure don't use common user names as admin, mysql or kafka
+- For sure don't use common user names such as admin, mysql or kafka
 - No password authentication
 - No root login
 - Use key access only
