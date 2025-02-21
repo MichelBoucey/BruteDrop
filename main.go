@@ -19,13 +19,19 @@ var (
 
 func main() {
 
-	version := "2.0.1"
+	version := "3.0.0"
 
 	var config Config
 
 	var logLines []string
 
 	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?invalid\suser\s(\w+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}`)
+
+	var httpLogLines []string
+
+	var http404Error = regexp.MustCompile(`^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?"\s404\s\d*\s"`)
+
+	var http404ErrorsCount = make(map[string]int)
 
 	versionFlag := flag.Bool("version", false, "Show version")
 
@@ -34,7 +40,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v" + version + " (" + commitHash + ")\nCopyright ©2024 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v" + version + " (" + commitHash + ")\nCopyright ©225 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -70,49 +76,89 @@ func main() {
 		log.SetFlags(0)
 	}
 
+	//
+	// Ban IP addresses for SSH login attempt
+	//
+
 	// Okay, now get some of the latest log lines of failed SSH login attempts from journalctl
 	out, err := exec.Command("sh", "-c", config.Journalctl+" --since \""+strconv.Itoa(config.LogEntriesSince)+" minutes ago\" -u sshd --no-pager | grep invalid").Output()
 
-	if len(out) == 0 {
-		os.Exit(0)
-	}
-	logLines = strings.Split(string(out), "\n")
+	if len(out) >= 0 {
 
-	// Iterating over log lines searching invalid users
-	// who fails to login to ban their IP addresses
-	for i := 0; i < len(logLines); i++ {
+		logLines = strings.Split(string(out), "\n")
 
-		if logLines[i] != "" {
+		// Iterating over log lines searching invalid users
+		// who fails to login to ban their IP addresses
+		for i := 0; i < len(logLines); i++ {
 
-			matches := invalidUser.FindStringSubmatch(logLines[i])
+			if logLines[i] != "" {
 
-			if len(matches) == 4 {
+				matches := invalidUser.FindStringSubmatch(logLines[i])
 
-				if isElement(matches[2], config.AuthorizedUsers) {
+				if len(matches) == 4 {
 
-					log.Println("Authorized user " + matches[2] + " failed to login from " + matches[3] + " at " + matches[1])
+					if isElement(matches[2], config.AuthorizedUsers) {
 
-				} else if !isElement(matches[3], config.AuthorizedAddresses) {
+						log.Println("Authorized user " + matches[2] + " failed to login from " + matches[3] + " at " + matches[1])
 
-					// Is this IP address already banned with an iptables DROP rule ?
-					_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
-					if err != nil {
-						// No, so ban this IP address with a DROP iptables rule
-						dropCommand := config.Iptables + " -w -A INPUT -s " + matches[3] + " -j DROP"
-						if config.DryRun == false {
-							err := exec.Command("sh", "-c", dropCommand).Run()
-							if err != nil {
-								log.Fatal("Can't execute \"" + dropCommand + "\"")
+					} else if !isElement(matches[3], config.AuthorizedAddresses) {
+
+						// Is this IP address already banned with an iptables DROP rule ?
+						_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
+						if err != nil {
+							// No, so ban this IP address with a DROP iptables rule
+							dropCommand := config.Iptables + " -w -A INPUT -s " + matches[3] + " -j DROP"
+							if config.DryRun == false {
+								err := exec.Command("sh", "-c", dropCommand).Run()
+								if err != nil {
+									log.Fatal("Can't execute \"" + dropCommand + "\"")
+								}
+								log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
+							} else {
+								log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 							}
-							log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
-						} else {
-							log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 						}
+					} else {
+
+						log.Println("Invalid user " + matches[2] + " from authorized IP address " + matches[3] + " at " + matches[1])
+
 					}
-				} else {
+				}
+			}
+		}
+	}
 
-					log.Println("Invalid user " + matches[2] + " from authorized IP address " + matches[3] + " at " + matches[1])
+	//
+	// Ban IP addresses for too many HTTP 404 Errors
+	//
 
+	httpLogOutput, err := exec.Command("sh", "-c", "tail -n 300 /opt/WebSites/volumes/nginx/logs/access.log").Output()
+	httpLogLines = strings.Split(string(httpLogOutput), "\n")
+
+	for i := 0; i < len(httpLogLines); i++ {
+
+		a404Error := http404Error.FindStringSubmatch(httpLogLines[i])
+
+		if len(a404Error) == 2 {
+
+			http404ErrorsCount[a404Error[1]]++
+
+			if http404ErrorsCount[a404Error[1]] == 3 {
+
+				// Is this IP address already banned with an iptables DROP rule ?
+				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+a404Error[1]+" -j DROP").Output()
+				if err != nil {
+					// No, so ban this IP address with a DROP iptables rule
+					dropCommand := config.Iptables + " -w -A INPUT -s " + a404Error[1] + " -j DROP"
+					if config.DryRun == false {
+						err := exec.Command("sh", "-c", dropCommand).Run()
+						if err != nil {
+							log.Fatal("Can't execute \"" + dropCommand + "\"")
+						}
+						log.Println("Ban " + a404Error[1] + " for too many HTTP 404 errors")
+					} else {
+						log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
+					}
 				}
 			}
 		}
