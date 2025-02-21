@@ -4,7 +4,7 @@
 
 BruteDrop is a simple but effective - I mean <i>brute</i> - tool written in Go as response to brute force attacks.
 
-The idea, very common instead, is to block all ports to each IP address from which someone try to gain access to an SSH session by brute force attack.
+The idea, very common indeed, is to block all ports to each IP address from which someone try to gain access to an SSH session by brute force attack.
 
 ## 2. Basic pre-required sshd_config configuration against SSH attack
 
