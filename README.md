@@ -23,7 +23,7 @@ Which gives in `sshd_config` file directives:
 PasswordAuthentication no
 PermitRootLogin no
 PubkeyAcceptedKeyTypes ssh-ed25519
-AllowUsers angus@* malcom@this.ip.addresse
+AllowUsers angus@* malcom@this.ip.address
 ```
 
 ## 3. Install BruteDrop binary
