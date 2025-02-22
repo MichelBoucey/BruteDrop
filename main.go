@@ -13,21 +13,19 @@ import (
 	"strings"
 )
 
-var (
-	commitHash = ""
-)
+var commitHash = ""
+
+var config Config
 
 func main() {
 
 	version := "3.0.0"
 
-	var config Config
-
 	var logLines []string
 
-	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?invalid\suser\s(\w+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}`)
-
 	var httpLogLines []string
+
+	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?invalid\suser\s(\w+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}`)
 
 	var http404Error = regexp.MustCompile(`^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?"\s404\s\d*\s"`)
 
@@ -40,7 +38,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag == true {
-		fmt.Println("brutedrop v" + version + " (" + commitHash + ")\nCopyright ©225 Michel Boucey\nReleased under 3-Clause BSD License")
+		fmt.Println("brutedrop v" + version + " (" + commitHash + ")\nCopyright @2025 Michel Boucey\nReleased under 3-Clause BSD License")
 		os.Exit(0)
 	}
 
@@ -103,21 +101,20 @@ func main() {
 
 					} else if !isElement(matches[3], config.AuthorizedAddresses) {
 
-						// Is this IP address already banned with an iptables DROP rule ?
-						_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+matches[3]+" -j DROP").Output()
-						if err != nil {
-							// No, so ban this IP address with a DROP iptables rule
+						if !isAlreadyBanned(matches[3]) {
 							dropCommand := config.Iptables + " -w -A INPUT -s " + matches[3] + " -j DROP"
 							if config.DryRun == false {
 								err := exec.Command("sh", "-c", dropCommand).Run()
 								if err != nil {
 									log.Fatal("Can't execute \"" + dropCommand + "\"")
 								}
-								log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
+								// log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
+								log.Println("Ban " + matches[3] + " for SSH login attempt as " + matches[2] + " at " + matches[1])
 							} else {
 								log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 							}
 						}
+
 					} else {
 
 						log.Println("Invalid user " + matches[2] + " from authorized IP address " + matches[3] + " at " + matches[1])
@@ -145,10 +142,7 @@ func main() {
 
 			if http404ErrorsCount[a404Error[1]] == 3 {
 
-				// Is this IP address already banned with an iptables DROP rule ?
-				_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+a404Error[1]+" -j DROP").Output()
-				if err != nil {
-					// No, so ban this IP address with a DROP iptables rule
+				if !isAlreadyBanned(a404Error[1]) {
 					dropCommand := config.Iptables + " -w -A INPUT -s " + a404Error[1] + " -j DROP"
 					if config.DryRun == false {
 						err := exec.Command("sh", "-c", dropCommand).Run()
@@ -164,3 +158,12 @@ func main() {
 		}
 	}
 }
+
+func isAlreadyBanned (ipAddr string) bool {
+
+	_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+ ipAddr +" -j DROP").Output()
+
+	if err == nil { return true } else { return false }
+
+}
+
