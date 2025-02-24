@@ -8,6 +8,7 @@ type Config struct {
 	LogEntriesSince     int      `yaml:"LogEntriesSince"`
 	AuthorizedUsers     []string `yaml:"AuthorizedUsers"`
 	AuthorizedAddresses []string `yaml:"AuthorizedAddresses"`
+	MaxHTTP404Errors    int      `yaml:"MaxHTTP404Errors"`
 }
 
 func isElement(e string, l []string) bool {
