@@ -27,7 +27,7 @@ func main() {
 
 	var invalidUser = regexp.MustCompile(`^(.*?\d{2}:\d{2}:\d{2}).*?invalid\suser\s(\w+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\sport\s\d{1,5}`)
 
-	var http404Error = regexp.MustCompile(`^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?"\s404\s\d*\s"`)
+	var http404Error = regexp.MustCompile(`^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s-\s-\s\[(\d{2})/(...)/\d{4}:(\d{2}:\d{2}:\d{2})\s.*?\s404\s\d+\s"`)
 
 	var http404ErrorsCount = make(map[string]int)
 
@@ -139,7 +139,7 @@ func main() {
 
 			a404Error := http404Error.FindStringSubmatch(httpLines[i])
 
-			if len(a404Error) == 2 {
+			if len(a404Error) == 5 {
 
 				http404ErrorsCount[a404Error[1]]++
 
@@ -152,7 +152,7 @@ func main() {
 							if err != nil {
 								log.Fatal("Can't execute \"" + dropCommand + "\"")
 							}
-							log.Println("Ban " + a404Error[1] + " for too many HTTP 404 errors")
+							log.Println("Ban " + a404Error[1] + " for too many HTTP 404 errors at " + a404Error[3] + " " + a404Error[2] + " " + a404Error[4])
 						} else {
 							log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 						}
@@ -163,11 +163,14 @@ func main() {
 	}
 }
 
-func isAlreadyBanned (ipAddr string) bool {
+func isAlreadyBanned(ipAddr string) bool {
 
-	_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+ ipAddr +" -j DROP").Output()
+	_, err := exec.Command("sh", "-c", config.Iptables+" -w -C INPUT -s "+ipAddr+" -j DROP").Output()
 
-	if err == nil { return true } else { return false }
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
 
 }
-
