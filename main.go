@@ -91,25 +91,24 @@ func main() {
 
 			if sshLines[i] != "" {
 
-				matches := invalidUser.FindStringSubmatch(sshLines[i])
+				sshLoginAttempt := invalidUser.FindStringSubmatch(sshLines[i])
 
-				if len(matches) == 4 {
+				if len(sshLoginAttempt) == 4 {
 
-					if isElement(matches[2], config.AuthorizedUsers) {
+					if isElement(sshLoginAttempt[2], config.AuthorizedUsers) {
 
-						log.Println("Authorized user " + matches[2] + " failed to login from " + matches[3] + " at " + matches[1])
+						log.Println("Authorized user " + sshLoginAttempt[2] + " failed to login from " + sshLoginAttempt[3] + " at " + sshLoginAttempt[1])
 
-					} else if !isElement(matches[3], config.AuthorizedAddresses) {
+					} else if !isElement(sshLoginAttempt[3], config.AuthorizedAddresses) {
 
-						if !isAlreadyBanned(matches[3]) {
-							dropCommand := config.Iptables + " -w -A INPUT -s " + matches[3] + " -j DROP"
+						if !isAlreadyBanned(sshLoginAttempt[3]) {
+							dropCommand := config.Iptables + " -w -A INPUT -s " + sshLoginAttempt[3] + " -j DROP"
 							if config.DryRun == false {
 								err := exec.Command("sh", "-c", dropCommand).Run()
 								if err != nil {
 									log.Fatal("Can't execute \"" + dropCommand + "\"")
 								}
-								// log.Println("Ban " + matches[2] + "@" + matches[3] + " at " + matches[1])
-								log.Println("Ban " + matches[3] + " for SSH login attempt as " + matches[2] + " at " + matches[1])
+								log.Println(sshLoginAttempt[3] + " banned for SSH login attempt as " + sshLoginAttempt[2] + " at " + sshLoginAttempt[1])
 							} else {
 								log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 							}
@@ -117,7 +116,7 @@ func main() {
 
 					} else {
 
-						log.Println("Invalid user " + matches[2] + " from authorized IP address " + matches[3] + " at " + matches[1])
+						log.Println("Invalid user " + sshLoginAttempt[2] + " from authorized IP address " + sshLoginAttempt[3] + " at " + sshLoginAttempt[1])
 
 					}
 				}
@@ -139,7 +138,7 @@ func main() {
 
 			a404Error := http404Error.FindStringSubmatch(httpLines[i])
 
-			if len(a404Error) == 5 {
+			if len(a404Error) == 5 && !isElement(a404Error[1], config.AuthorizedAddresses) {
 
 				http404ErrorsCount[a404Error[1]]++
 
@@ -152,7 +151,7 @@ func main() {
 							if err != nil {
 								log.Fatal("Can't execute \"" + dropCommand + "\"")
 							}
-							log.Println("Ban " + a404Error[1] + " for too many HTTP 404 errors at " + a404Error[3] + " " + a404Error[2] + " " + a404Error[4])
+							log.Println(a404Error[1] + " banned for too many HTTP 404 errors at " + a404Error[3] + " " + a404Error[2] + " " + a404Error[4])
 						} else {
 							log.Println("BruteDrop is currently in dry run mode (" + dropCommand + ")")
 						}
